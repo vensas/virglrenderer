@@ -650,8 +650,11 @@ void vrend_check_texture_multisample(struct vrend_format_table *table,
 {
    bool is_desktop_gl = epoxy_is_desktop_gl();
    for (int i = 0; i < VIRGL_FORMAT_MAX_EXTENDED; i++) {
-      bool function_available =
-         (table[i].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE) ? enable_storage : is_desktop_gl;
+      /* A format that supports immutable storage may still lack storage multisample
+       * (e.g. Apple's OpenGL 4.1); desktop GL can then use glTexImage2DMultisample. */
+      bool use_storage =
+         (table[i].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE) && enable_storage;
+      bool function_available = use_storage || is_desktop_gl;
 
       if (table[i].internalformat != 0 &&
           !(table[i].flags & VIRGL_TEXTURE_CAN_MULTISAMPLE) &&
@@ -659,7 +662,7 @@ void vrend_check_texture_multisample(struct vrend_format_table *table,
          GLuint tex_id;
          glGenTextures(1, &tex_id);
          glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex_id);
-         if (table[i].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE) {
+         if (use_storage) {
             glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 2,
                                       table[i].internalformat, 32, 32, GL_TRUE);
          } else {

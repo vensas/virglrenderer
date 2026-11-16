@@ -8759,7 +8759,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       }
 
       if (pr->nr_samples > 1) {
-         if (format_can_texture_storage) {
+         if (format_can_texture_storage && has_feature(feat_storage_multisample)) {
             if (gr->target == GL_TEXTURE_2D_MULTISAMPLE) {
                glTexStorage2DMultisample(gr->target, pr->nr_samples,
                                          internalformat, pr->width0, pr->height0,
